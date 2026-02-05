@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react'
+import type { LangCode } from '../utils/translations'
 
-export function useLocalStorage(key, defaultValue) {
-  const [value, setValue] = useState(() => {
+const SUPPORTED_LANGS: LangCode[] = ['en', 'ja', 'zh', 'es', 'hi']
+
+export function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(() => {
     try {
       const saved = localStorage.getItem(key)
-      return saved !== null ? JSON.parse(saved) : defaultValue
+      return saved !== null ? (JSON.parse(saved) as T) : defaultValue
     } catch {
       return defaultValue
     }
@@ -21,14 +24,13 @@ export function useLocalStorage(key, defaultValue) {
   return [value, setValue]
 }
 
-function detectBrowserLanguage() {
+function detectBrowserLanguage(): LangCode {
   try {
-    const browserLang = navigator.language || navigator.userLanguage || 'en'
+    const browserLang = navigator.language || 'en'
     const langCode = browserLang.split('-')[0].toLowerCase()
 
-    const supportedLangs = ['en', 'ja', 'zh', 'es', 'hi']
-    if (supportedLangs.includes(langCode)) {
-      return langCode
+    if (SUPPORTED_LANGS.includes(langCode as LangCode)) {
+      return langCode as LangCode
     }
 
     if (browserLang.toLowerCase().startsWith('zh')) {
@@ -41,12 +43,12 @@ function detectBrowserLanguage() {
   }
 }
 
-export function useLanguage() {
-  const [lang, setLang] = useState(() => {
+export function useLanguage(): [LangCode, Dispatch<SetStateAction<LangCode>>] {
+  const [lang, setLang] = useState<LangCode>(() => {
     try {
       const saved = localStorage.getItem('marathon-pace-lang')
       if (saved !== null) {
-        return JSON.parse(saved)
+        return JSON.parse(saved) as LangCode
       }
       return detectBrowserLanguage()
     } catch {

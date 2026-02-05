@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, type ChangeEvent, type MouseEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLocalStorage, useLanguage } from './hooks/useLocalStorage'
 import { TRANSLATIONS, LANGUAGES } from './utils/translations'
+import type { TranslationKey } from './utils/translations'
 import {
   MARATHON_DISTANCE_KM,
   MARATHON_DISTANCE_MI,
@@ -28,8 +29,30 @@ import {
   CheckIcon,
 } from './components/Icons'
 
+interface Theme {
+  bg: string
+  card: string
+  cardBorder: string
+  text: string
+  textMuted: string
+  textSubtle: string
+  title: string
+  accent: string
+  tableHeader: string
+  tableHeaderText: string
+  tableRowAlt: string
+  tableRowAlt2: string
+  tableHighlight: string
+  tableBorder: string
+  presetActive: string
+  presetInactive: string
+  unitActive: string
+  unitInactive: string
+  sliderTrack: string
+}
+
 export default function App() {
-  const { time: timeParam } = useParams()
+  const { time: timeParam } = useParams<{ time: string }>()
   const navigate = useNavigate()
 
   // Parse URL parameter if present
@@ -37,13 +60,13 @@ export default function App() {
 
   // Persisted state
   const [storedMinutes, setStoredMinutes] = useLocalStorage('marathon-pace-minutes', 240)
-  const [unit, setUnit] = useLocalStorage('marathon-pace-unit', 'km')
+  const [unit, setUnit] = useLocalStorage<'km' | 'mi'>('marathon-pace-unit', 'km')
   const [darkMode, setDarkMode] = useLocalStorage('marathon-pace-dark', false)
   const [lang, setLang] = useLanguage()
 
   // Use URL param if available, otherwise use stored value
   const totalMinutes = initialMinutes ?? storedMinutes
-  const setTotalMinutes = (value) => {
+  const setTotalMinutes = (value: number) => {
     setStoredMinutes(value)
     // Update URL when user changes time
     navigate(`/${timeToUrlParam(value)}`, { replace: true })
@@ -51,19 +74,19 @@ export default function App() {
 
   // Update document title based on time
   useEffect(() => {
-    const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key]
+    const t = (key: TranslationKey) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key]
     document.title = `${formatTime(totalMinutes * 60)} - ${t('title')}`
   }, [totalMinutes, lang])
 
   // UI state
   const [showShareModal, setShowShareModal] = useState(false)
   const [showLangModal, setShowLangModal] = useState(false)
-  const [generatedImage, setGeneratedImage] = useState(null)
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
 
   const t = useCallback(
-    (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key,
+    (key: TranslationKey) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key,
     [lang]
   )
 
@@ -82,7 +105,7 @@ export default function App() {
     const checkpoints = unit === 'km' ? CHECKPOINTS_KM : CHECKPOINTS_MI
     const marathonDistance = unit === 'km' ? MARATHON_DISTANCE_KM : MARATHON_DISTANCE_MI
     return checkpoints.map((cp) => ({
-      label: cp.labelKey ? t(cp.labelKey) : cp.label,
+      label: cp.labelKey ? t(cp.labelKey as TranslationKey) : cp.label!,
       isFinish: cp.labelKey === 'finish',
       isHalf: cp.labelKey === 'half',
       splitTime: formatTime((cp.distance / marathonDistance) * totalFinishSeconds),
@@ -122,7 +145,7 @@ export default function App() {
   const generatePaceCardImage = useCallback(() => {
     setIsGenerating(true)
     const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d')!
     canvas.width = 1200
     canvas.height = 630
 
@@ -238,7 +261,7 @@ export default function App() {
     )
   }, [shareableUrl])
 
-  const theme = {
+  const theme: Theme = {
     bg: darkMode
       ? 'bg-gray-900'
       : 'bg-gradient-to-br from-blue-50 to-indigo-100',
@@ -323,7 +346,7 @@ export default function App() {
               min={MIN_MINUTES}
               max={MAX_MINUTES}
               value={totalMinutes}
-              onChange={(e) => setTotalMinutes(parseInt(e.target.value))}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setTotalMinutes(parseInt(e.target.value))}
               className="time-slider"
               style={{
                 background: `linear-gradient(to right, #6366f1 0%, #6366f1 ${sliderPercent}%, ${theme.sliderTrack} ${sliderPercent}%, ${theme.sliderTrack} 100%)`,
@@ -495,7 +518,7 @@ export default function App() {
         >
           <div
             className={`${theme.card} rounded-2xl max-w-sm w-full p-6 modal-content`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className={`text-xl font-bold ${theme.text}`}>🌐 Language</h3>
@@ -539,7 +562,7 @@ export default function App() {
         >
           <div
             className={`${theme.card} rounded-2xl max-w-lg w-full p-6 modal-content`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className={`text-xl font-bold ${theme.text}`}>
