@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run typecheck:*)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run build:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_click",
+      "Bash(kill:*)",
+      "Bash(sips:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(npx playwright:*)"
+    ]
+  }
+}

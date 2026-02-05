@@ -2,6 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Track-inspired background pattern ── */
+.track-pattern {
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(217, 79, 48, 0.02) 40px,
+      rgba(217, 79, 48, 0.02) 41px
+    );
+}
+
+.dark .track-pattern {
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(232, 97, 61, 0.03) 40px,
+      rgba(232, 97, 61, 0.03) 41px
+    );
+}
+
+/* ── Slider ── */
+.time-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.time-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #D94F30;
+  cursor: grab;
+  box-shadow:
+    0 0 0 4px rgba(217, 79, 48, 0.15),
+    0 2px 8px rgba(217, 79, 48, 0.3);
+  border: 3px solid white;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.time-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 6px rgba(217, 79, 48, 0.12),
+    0 4px 12px rgba(217, 79, 48, 0.35);
+}
+
+.time-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.dark .time-slider::-webkit-slider-thumb {
+  background: #E8613D;
+  border-color: #1A1D27;
+  box-shadow:
+    0 0 0 4px rgba(232, 97, 61, 0.2),
+    0 2px 8px rgba(232, 97, 61, 0.4);
+}
+
+.time-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #D94F30;
+  cursor: grab;
+  box-shadow:
+    0 0 0 4px rgba(217, 79, 48, 0.15),
+    0 2px 8px rgba(217, 79, 48, 0.3);
+  border: 3px solid white;
+}
+
+.dark .time-slider::-moz-range-thumb {
+  background: #E8613D;
+  border-color: #1A1D27;
+}
+
+/* ── Modal Animations ── */
+.modal-overlay {
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Table row highlight border ── */
+.row-highlight {
+  position: relative;
+}
+
+.row-highlight::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #D94F30;
+  border-radius: 0 2px 2px 0;
+}
+
+.dark .row-highlight::before {
+  background: #E8613D;
+}
+
+/* ── Print Styles ── */
 @media print {
   .no-print {
     display: none !important;
@@ -12,6 +145,7 @@
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
   .pace-table {
     page-break-inside: avoid;
@@ -24,75 +158,5 @@
 @media screen {
   .print-only {
     display: none;
-  }
-}
-
-.time-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 12px;
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-}
-
-.time-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  cursor: grab;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
-  border: 3px solid white;
-  transition: transform 0.15s ease;
-}
-
-.time-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-.time-slider::-webkit-slider-thumb:active {
-  cursor: grabbing;
-  transform: scale(1.15);
-}
-
-.time-slider::-moz-range-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  cursor: grab;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
-  border: 3px solid white;
-}
-
-.modal-overlay {
-  animation: fadeIn 0.2s ease;
-}
-
-.modal-content {
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

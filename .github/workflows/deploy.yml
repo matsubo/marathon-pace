@@ -32,24 +32,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Convert SVG to PNG for OGP
-        run: |
-          # Install resvg-js for SVG to PNG conversion
-          npm install -g @aspect-run/resvg-cli || npx --yes @aspect-run/resvg-cli --help > /dev/null 2>&1 || true
-          # Convert SVG to PNG
-          if [ -f "public/og-image.svg" ]; then
-            npx @aspect-run/resvg-cli public/og-image.svg public/og-image.png --width 1200 --height 630 || {
-              # Fallback: use ImageMagick if available
-              if command -v convert &> /dev/null; then
-                convert public/og-image.svg public/og-image.png
-              fi
-            }
-          fi
+        run: pnpm install --frozen-lockfile
 
       - name: Build
         env:
@@ -57,7 +47,7 @@ jobs:
           # For user/org pages (username.github.io), use '/'
           # For project pages (username.github.io/repo-name), use '/repo-name/'
           BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '/' || format('/{0}/', github.event.repository.name) }}
-        run: npm run build
+        run: pnpm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
