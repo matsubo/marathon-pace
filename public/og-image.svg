@@ -1,0 +1,39 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="100" cy="100" r="80" fill="rgba(255,255,255,0.03)"/>
+  <circle cx="1100" cy="530" r="100" fill="rgba(255,255,255,0.03)"/>
+  <circle cx="900" cy="150" r="60" fill="rgba(255,255,255,0.03)"/>
+
+  <!-- White card -->
+  <rect x="60" y="60" width="1080" height="510" rx="24" fill="white"/>
+
+  <!-- Title -->
+  <text x="600" y="130" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="bold" fill="#1e1b4b">🏃 Marathon Pace Chart</text>
+
+  <!-- Target time -->
+  <text x="600" y="270" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="120" font-weight="bold" fill="#4f46e5">4:00:00</text>
+
+  <!-- Target label -->
+  <text x="600" y="320" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#6b7280">Target Finish Time</text>
+
+  <!-- Pace box -->
+  <rect x="440" y="365" width="320" height="100" rx="16" fill="#f3f4f6"/>
+  <text x="600" y="405" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#374151">Pace per km</text>
+  <text x="600" y="450" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="bold" fill="#4f46e5">5:41 /km</text>
+
+  <!-- Half and full times -->
+  <text x="600" y="520" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#9ca3af">Half Marathon: 2:00:00 • Full Marathon: 4:00:00</text>
+
+  <!-- Footer -->
+  <text x="600" y="555" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#d1d5db">Marathon Pace Chart • 42.195 km</text>
+</svg>
