@@ -23,16 +23,16 @@ A web application to calculate marathon split times. Set your target finish time
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run build
+pnpm run build
 
 # Preview production build
-npm run preview
+pnpm run preview
 ```
 
 ## Deployment to GitHub Pages
@@ -44,7 +44,6 @@ npm run preview
 5. The included workflow will automatically build and deploy on push to `main`
 
 The workflow automatically handles:
-- Converting SVG OGP image to PNG
 - Setting correct base path for GitHub Pages
 - Building and deploying the app
 
@@ -56,9 +55,6 @@ The app supports URL-based time sharing:
 - `/2-45-30` - 2 hours 45 minutes 30 seconds
 
 ## Customization
-
-### OGP Image
-Replace `public/og-image.svg` with your own design. The GitHub Actions workflow will convert it to PNG during build.
 
 ### Base Path
 The vite config automatically detects if you're using a subdirectory (e.g., `username.github.io/repo-name`) or root domain.
