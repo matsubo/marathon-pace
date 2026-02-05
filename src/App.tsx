@@ -1,4 +1,11 @@
 import { useState, useMemo, useCallback, useEffect, useRef, type ChangeEvent, type MouseEvent } from 'react'
+
+// Extend Window interface for dataLayer
+declare global {
+  interface Window {
+    dataLayer?: Array<Record<string, unknown>>
+  }
+}
 import { useSearchParams } from 'react-router-dom'
 import { useLocalStorage, useLanguage } from './hooks/useLocalStorage'
 import { TRANSLATIONS, LANGUAGES } from './utils/translations'
@@ -64,9 +71,20 @@ export default function App() {
   const initialMinutes = timeParam ? parseTimeString(timeParam) : null
 
   const [storedMinutes, setStoredMinutes] = useLocalStorage('marathon-pace-minutes', 240)
-  const [unit, setUnit] = useLocalStorage<'km' | 'mi'>('marathon-pace-unit', 'km')
+  const [unit, setUnitRaw] = useLocalStorage<'km' | 'mi'>('marathon-pace-unit', 'km')
   const [darkMode, setDarkMode] = useLocalStorage('marathon-pace-dark', false)
   const [lang, setLang] = useLanguage()
+
+  // Wrapper to track unit changes in GA4
+  const setUnit = useCallback((newUnit: 'km' | 'mi') => {
+    setUnitRaw(newUnit)
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'unit_change',
+        unit: newUnit,
+      })
+    }
+  }, [setUnitRaw])
 
   // Immediate display state for responsive slider
   const [displayMinutes, setDisplayMinutes] = useState(
@@ -83,6 +101,15 @@ export default function App() {
     debounceRef.current = setTimeout(() => {
       setStoredMinutes(value)
       setSearchParams({ target_time: timeToUrlParam(value) }, { replace: true })
+
+      // Push to GTM dataLayer for GA4 tracking
+      if (window.dataLayer) {
+        window.dataLayer.push({
+          event: 'slider_change',
+          slider_value_minutes: value,
+          slider_value_formatted: formatTime(value * 60),
+        })
+      }
     }, 150)
   }
 
