@@ -72,7 +72,7 @@ export default function App() {
   const [displayMinutes, setDisplayMinutes] = useState(
     () => initialMinutes ?? storedMinutes
   )
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const totalMinutes = displayMinutes
 
