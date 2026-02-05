@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, type ChangeEvent, type MouseEvent } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef, type ChangeEvent, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLocalStorage, useLanguage } from './hooks/useLocalStorage'
 import { TRANSLATIONS, LANGUAGES } from './utils/translations'
@@ -68,12 +68,30 @@ export default function App() {
   const [darkMode, setDarkMode] = useLocalStorage('marathon-pace-dark', false)
   const [lang, setLang] = useLanguage()
 
-  const totalMinutes = initialMinutes ?? storedMinutes
+  // Immediate display state for responsive slider
+  const [displayMinutes, setDisplayMinutes] = useState(
+    () => initialMinutes ?? storedMinutes
+  )
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const totalMinutes = displayMinutes
+
   const setTotalMinutes = (value: number) => {
-    setStoredMinutes(value)
-    setSearchParams({ target_time: timeToUrlParam(value) }, { replace: true })
+    setDisplayMinutes(value)
+    // Debounce expensive side effects (localStorage + URL update)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setStoredMinutes(value)
+      setSearchParams({ target_time: timeToUrlParam(value) }, { replace: true })
+    }, 150)
   }
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
   const [showShareModal, setShowShareModal] = useState(false)
   const [showLangModal, setShowLangModal] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
