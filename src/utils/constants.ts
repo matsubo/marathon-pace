@@ -11,6 +11,7 @@ export interface Preset {
 
 export const PRESETS: Preset[] = [
   { label: '2:30', minutes: 150 },
+  { label: '2:50', minutes: 170 },
   { label: '3:00', minutes: 180 },
   { label: '3:30', minutes: 210 },
   { label: '4:00', minutes: 240 },
