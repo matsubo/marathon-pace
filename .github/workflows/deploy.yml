@@ -37,20 +37,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Convert SVG to PNG for OGP
-        run: |
-          # Install resvg-js for SVG to PNG conversion
-          npm install -g @aspect-run/resvg-cli || npx --yes @aspect-run/resvg-cli --help > /dev/null 2>&1 || true
-          # Convert SVG to PNG
-          if [ -f "public/og-image.svg" ]; then
-            npx @aspect-run/resvg-cli public/og-image.svg public/og-image.png --width 1200 --height 630 || {
-              # Fallback: use ImageMagick if available
-              if command -v convert &> /dev/null; then
-                convert public/og-image.svg public/og-image.png
-              fi
-            }
-          fi
-
       - name: Build
         env:
           # Automatically set base path based on repository name
