@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, type ChangeEvent, type MouseEvent } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useLocalStorage, useLanguage } from './hooks/useLocalStorage'
 import { TRANSLATIONS, LANGUAGES } from './utils/translations'
 import type { TranslationKey } from './utils/translations'
@@ -52,8 +52,8 @@ interface Theme {
 }
 
 export default function App() {
-  const { time: timeParam } = useParams<{ time: string }>()
-  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const timeParam = searchParams.get('target_time')
 
   // Parse URL parameter if present
   const initialMinutes = timeParam ? parseTimeString(timeParam) : null
@@ -69,14 +69,8 @@ export default function App() {
   const setTotalMinutes = (value: number) => {
     setStoredMinutes(value)
     // Update URL when user changes time
-    navigate(`/${timeToUrlParam(value)}`, { replace: true })
+    setSearchParams({ target_time: timeToUrlParam(value) }, { replace: true })
   }
-
-  // Update document title based on time
-  useEffect(() => {
-    const t = (key: TranslationKey) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key]
-    document.title = `${formatTime(totalMinutes * 60)} - ${t('title')}`
-  }, [totalMinutes, lang])
 
   // UI state
   const [showShareModal, setShowShareModal] = useState(false)
@@ -117,9 +111,32 @@ export default function App() {
 
   // Generate shareable URL
   const shareableUrl = useMemo(() => {
-    const base = window.location.origin
-    return `${base}/${timeToUrlParam(totalMinutes)}`
+    const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+    return `${window.location.origin}${basePath}?target_time=${timeToUrlParam(totalMinutes)}`
   }, [totalMinutes])
+
+  // Update document title and OGP meta tags
+  useEffect(() => {
+    const timeStr = formatTime(totalMinutes * 60)
+    const paceStr = unit === 'km'
+      ? `${formatPace(pacePerKm)}/km`
+      : `${formatPace(pacePerMi)}/mi`
+    const title = `${timeStr} - ${t('title')}`
+    const description = `${t('targetTime')}: ${timeStr} | ${t('pace')}: ${paceStr}`
+
+    document.title = title
+
+    const updateMeta = (attr: string, key: string, content: string) => {
+      const el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null
+      if (el) el.content = content
+    }
+
+    updateMeta('property', 'og:title', title)
+    updateMeta('property', 'og:description', description)
+    updateMeta('property', 'og:url', shareableUrl)
+    updateMeta('name', 'twitter:title', title)
+    updateMeta('name', 'twitter:description', description)
+  }, [totalMinutes, unit, pacePerKm, pacePerMi, t, shareableUrl])
 
 
   // Copy link to clipboard
