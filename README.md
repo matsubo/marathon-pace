@@ -2,6 +2,10 @@
 
 A web application to calculate marathon split times. Set your target finish time and get pace charts for race day.
 
+| Light Mode | Dark Mode |
+|:---:|:---:|
+| ![Light Mode](docs/marathon-pace-light.png) | ![Dark Mode](docs/marathon-pace-dark.png) |
+
 ## Features
 
 - **Slider-based input** - Easy time selection without typing
