@@ -523,7 +523,12 @@ export default function App() {
 
         {/* Footer */}
         <div className={`text-center ${theme.textSubtle} text-sm mt-8 no-print`}>
-          {t('goodLuck')} 🏆
+          <p>{t('goodLuck')} 🏆</p>
+          <p className="mt-2">
+            <a href="https://x.com/matsubokkuri" target="_blank" rel="noopener noreferrer" className="hover:underline">@matsubokkuri</a>
+            {' • '}
+            <a href="https://github.com/matsubo/marathon-pace" target="_blank" rel="noopener noreferrer" className="hover:underline">GitHub</a>
+          </p>
         </div>
       </div>
 
