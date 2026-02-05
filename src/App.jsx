@@ -26,6 +26,7 @@ import {
   PrintIcon,
   LinkIcon,
   CheckIcon,
+  GitHubIcon,
 } from './components/Icons'
 
 export default function App() {
@@ -483,7 +484,27 @@ export default function App() {
 
         {/* Footer */}
         <div className={`text-center ${theme.textSubtle} text-sm mt-8 no-print`}>
-          {t('goodLuck')} 🏆
+          <p>{t('goodLuck')} 🏆</p>
+          <div className="flex items-center justify-center gap-4 mt-2">
+            <a
+              href="https://x.com/matsubokkuri"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${theme.textSubtle} hover:opacity-75 transition-opacity`}
+              aria-label="Author on X"
+            >
+              <XIcon />
+            </a>
+            <a
+              href="https://github.com/matsubo/marathon-pace"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${theme.textSubtle} hover:opacity-75 transition-opacity`}
+              aria-label="GitHub repository"
+            >
+              <GitHubIcon />
+            </a>
+          </div>
         </div>
       </div>
 
