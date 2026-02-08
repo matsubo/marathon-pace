@@ -13,7 +13,18 @@
       "Bash(npx playwright install:*)",
       "Bash(npx playwright:*)",
       "Bash(gh variable:*)",
-      "Bash(pnpm test:*)"
+      "Bash(pnpm test:*)",
+      "Bash(tree:*)",
+      "Bash(npm run test:*)",
+      "Bash(pip3 install:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm build:*)",
+      "Bash(git add:*)",
+      "Bash(git rebase:*)"
     ]
+  },
+  "enabledPlugins": {
+    "web-asset-generator@web-asset-generator-marketplace": true
   }
 }
