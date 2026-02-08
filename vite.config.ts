@@ -1,5 +1,6 @@
 import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import Sitemap from 'vite-plugin-sitemap'
 
 function gtmPlugin(): Plugin {
   const gtmId = process.env.VITE_GTM_ID
@@ -30,7 +31,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), gtmPlugin()],
+  plugins: [
+    react(),
+    gtmPlugin(),
+    Sitemap({
+      hostname: 'https://matsubo.github.io',
+      basePath: '/marathon-pace',
+      exclude: ['/og-image'],
+      generateRobotsTxt: false,
+    }),
+  ],
   // Set base path - will be overridden by GitHub Actions
   // For custom domain: use '/'
   // For github.io/repo-name: use '/repo-name/'
