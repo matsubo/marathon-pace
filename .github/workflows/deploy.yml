@@ -47,7 +47,7 @@ jobs:
           # For user/org pages (username.github.io), use '/'
           # For project pages (username.github.io/repo-name), use '/repo-name/'
           BASE_PATH: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '/' || format('/{0}/', github.event.repository.name) }}
-          VITE_GTM_ID: ${{ vars.VITE_GTM_ID }}
+          VITE_GTM_ID: GTM-TXGV42PW
         run: pnpm run build
 
       - name: Setup Pages
