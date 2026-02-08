@@ -1,4 +1,4 @@
-# Marathon Pace Chart 🏃
+# Marathon Pace Chart
 
 A web application to calculate marathon split times. Set your target finish time and get pace charts for race day.
 
@@ -8,60 +8,83 @@ A web application to calculate marathon split times. Set your target finish time
 
 ## Features
 
-- **Slider-based input** - Easy time selection without typing
+- **Slider-based input** - Easy time selection (2:00:00 - 7:00:00) without typing
 - **Unit support** - Switch between kilometers and miles
-- **Multi-language** - English, Japanese, Chinese, Spanish, Hindi
-- **Shareable** - Share your pace chart on X and Facebook
-- **Print-friendly** - Optimized for printing
-- **Dark mode** - Eye-friendly dark theme
-- **URL sharing** - Share specific target times via URL (e.g., `/3-30-00` for 3:30:00)
+- **Multi-language** - English, Japanese, Chinese, Spanish, Hindi (auto-detected from browser)
+- **Dark mode** - Eye-friendly dark theme with localStorage persistence
+- **Share image** - Generate and download a pace card as PNG via Canvas rendering
+- **Social sharing** - Share on X (Twitter) and Facebook with OG meta tags
+- **URL sharing** - Share specific target times via query param (e.g., `?target_time=3-30-00`)
+- **Print-friendly** - Optimized layout for printing
 
 ## Tech Stack
 
-- React 18
+- React 19 + TypeScript
 - Vite 5
-- TailwindCSS 3
+- Tailwind CSS 3
 - React Router 6
+- Vitest + Testing Library
 
 ## Development
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm run dev
-
-# Build for production
-pnpm run build
-
-# Preview production build
-pnpm run preview
+pnpm install              # Install dependencies
+pnpm run dev              # Start dev server (localhost:5173)
+pnpm run build            # TypeScript check + Vite production build
+pnpm run preview          # Preview production build
+pnpm run typecheck        # tsc --noEmit
+pnpm run lint             # ESLint src/
+pnpm run test             # Vitest single run
+pnpm run test:watch       # Vitest watch mode
 ```
 
-## Deployment to GitHub Pages
+## Project Structure
 
-1. Create a new GitHub repository
-2. Push this code to the repository
-3. Go to **Settings > Pages**
-4. Under "Build and deployment", select **GitHub Actions**
-5. The included workflow will automatically build and deploy on push to `main`
+```
+src/
+├── App.tsx                        # Main component (UI, state, pace calculation, share image)
+├── main.tsx                       # Entry point with React Router
+├── OgImage.tsx                    # OG image rendering route (/og-image)
+├── index.css                      # Tailwind directives + custom styles
+├── components/
+│   ├── Icons.tsx                  # SVG icon components
+│   └── GoogleTagManager.tsx       # GTM analytics component
+├── hooks/
+│   ├── useLocalStorage.ts         # Generic localStorage hook + useLanguage
+│   └── useLocalStorage.test.ts
+├── utils/
+│   ├── constants.ts               # Marathon distances, checkpoints, formatters
+│   ├── constants.test.ts
+│   ├── translations.ts            # Type-safe i18n (5 languages)
+│   └── translations.test.ts
+└── test/
+    └── setup.ts                   # Vitest setup (jsdom, jest-dom matchers)
+```
 
-The workflow automatically handles:
-- Setting correct base path for GitHub Pages
-- Building and deploying the app
+## State Flow
 
-## URL Routing
+URL query param (`?target_time=3-30-00`) takes precedence over localStorage, which takes precedence over the default (4:00:00). When the slider changes, both localStorage and the URL are updated. Language is detected from the browser on first visit, then persisted to localStorage.
 
-The app supports URL-based time sharing:
-- `/` - Default (4:00:00)
-- `/3-30-00` - 3 hours 30 minutes
-- `/2-45-30` - 2 hours 45 minutes 30 seconds
+## Design System
 
-## Customization
+- **Fonts**: Bebas Neue (display) for times/headings, DM Sans (body text) via Google Fonts
+- **Colors**: `track-*` (vermillion accent) and `surface-*` (background) palettes in `tailwind.config.js`
+- **Dark mode**: CSS class-based (`dark` on `<html>`)
 
-### Base Path
-The vite config automatically detects if you're using a subdirectory (e.g., `username.github.io/repo-name`) or root domain.
+## Deployment
+
+Auto-deploys to GitHub Pages via GitHub Actions on push to `main`.
+
+The workflow handles:
+- Automatic base path detection for project pages vs user/org pages
+- Google Tag Manager injection (production only, via `VITE_GTM_ID` env var)
+- Sitemap generation (excludes `/og-image` route)
+
+### Setup
+
+1. Push code to a GitHub repository
+2. Go to **Settings > Pages**
+3. Under "Build and deployment", select **GitHub Actions**
 
 ## License
 
