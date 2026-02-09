@@ -4,105 +4,96 @@
 
 マラソンペース表を印刷・ラミネート加工し、ユーザーの自宅へ郵送するサービス。
 レース当日に腕に巻いたり、ポケットに入れて使えるペースカードを想定。
+**すべての工程をAPI連携で完全自動化する。手動オペレーションは一切行わない。**
 
 ---
 
-## 1. 結論: API完全自動化は可能だが、500円では赤字
+## 1. コスト試算と価格設定
 
-### コスト試算
+### 原価内訳 (Gelato API 完全自動化)
 
-| 項目 | API自動化 (Gelato) | セルフ運用 |
-|------|-------------------|-----------|
-| 印刷+ラミネート | 225〜400円 | 100〜200円 (バルク発注) |
-| 国内配送 | 185〜385円 | 84円 (普通郵便) |
-| Stripe手数料 (3.6%) | 18円 | 18円 |
-| **合計** | **428〜803円** | **202〜302円** |
+| 項目 | 最小 | 最大 |
+|------|------|------|
+| 印刷+ラミネート (カード1枚) | 225円 | 400円 |
+| 国内配送 | 185円 | 385円 |
+| Stripe手数料 (3.6% + 40円) | ― | ― |
+| **原価合計 (手数料前)** | **410円** | **785円** |
 
-**推奨価格: 800〜1,000円** (API完全自動化の場合)
+### 価格設定
 
-500円で収めるなら、自前で在庫を持ち普通郵便で送る半手動運用になる。
-あるいは、500円は印刷+ラミネート費用で、送料別途とする方法もある。
+| 項目 | 金額 |
+|------|------|
+| **販売価格** | **980円 (税込)** |
+| 原価 (印刷+配送) | 410〜785円 |
+| Stripe手数料 (3.6% + 40円) | 75円 |
+| **粗利** | **120〜495円** |
+
+- 2枚目以降は +500円/枚 (配送はまとめて1回)
+- ラミネート種類による価格差はなし (シンプルに保つ)
 
 ---
 
-## 2. 推奨アーキテクチャ
+## 2. アーキテクチャ
 
 ```
-[既存フロントエンド]  →  [新規バックエンド]  →  [外部サービス]
-
- 注文フォーム             Stripe決済処理          Stripe (決済)
- ペース表PDF生成          注文管理                Gelato API (印刷+配送)
- Stripe Checkout          Gelato API連携
-                          Webhook受信
+[既存 React SPA]  →  [Cloudflare Workers API]  →  [Stripe]  決済
+  (GitHub Pages)           (D1 + R2)             [Gelato]  印刷+配送
+                                                  [Resend]  メール通知
 ```
 
-### フロントエンド (既存アプリに追加)
+### 完全自動フロー
 
-現在の SPA に注文フローを追加する。
+```
+ユーザー          フロントエンド       Workers API        Stripe         Gelato        Resend
+  |                   |                  |                 |               |              |
+  |-- ペース設定 ---->|                  |                 |               |              |
+  |-- 注文入力 ------>|                  |                 |               |              |
+  |                   |-- POST /checkout->|                |               |              |
+  |                   |                  |-- Create PDF -->| (R2保存)      |              |
+  |                   |                  |-- Session ----->|               |              |
+  |                   |<-- redirect -----|                 |               |              |
+  |-- カード入力 ---->|                  |                 |               |              |
+  |                   |                  |<-- Webhook -----|               |              |
+  |                   |                  |   (payment OK)  |               |              |
+  |                   |                  |-- POST order ---|-------------->|              |
+  |                   |                  |-- 注文確認 ------|---------------|------------->|
+  |<-- 完了画面 ------|                  |                 |               |              |
+  |                   |                  |                 |               |              |
+  |                   |                  |<-- Webhook -----|-- shipped --->|              |
+  |                   |                  |-- 発送通知 ------|---------------|------------->|
+  |<-- メール --------|-----------------|-----------------|---------------|--------------|
+```
 
-### バックエンド (新規)
-
-現在は静的サイト (GitHub Pages) のため、サーバーサイドが必要。
-選択肢:
-
-| 方式 | メリット | デメリット |
-|------|---------|-----------|
-| **Cloudflare Workers** | 無料枠大、エッジ実行、KVストレージ | Workerランタイムの制約 |
-| **Vercel Serverless Functions** | Next.js親和性、デプロイ簡単 | フロントをVercelに移す必要あり |
-| **Supabase Edge Functions + DB** | DB付き、認証付き | やや過剰 |
-| **独立Express/Hono サーバー** | 自由度高い | インフラ管理が必要 |
-
-**推奨: Cloudflare Workers + D1 (SQLite)**
-- 無料枠で十分 (10万リクエスト/日)
-- D1でシンプルな注文管理DB
-- Stripe Webhook受信が容易
-- Gelato API呼び出しもfetch()で可能
+**人間の介入ポイント: ゼロ**
 
 ---
 
-## 3. 印刷・配送サービス選定
+## 3. 印刷・配送: Gelato API
 
-### 第1候補: Gelato API
-
-全工程をAPI1本で完結できる唯一のサービス。
+全工程をAPI1本で完結できるサービス。
 
 - **公式API**: https://dashboard.gelato.com/docs/
 - **対応プロダクト**: ポストカード、グリーティングカード、各種カード
 - **ラミネート**: `glossy-lamination`, `matt-lamination`, `soft-touch-lamination`
-- **日本国内印刷**: 現地パートナー工場で印刷→国内配送
+- **日本国内印刷**: 現地パートナー工場で印刷 → 国内配送
 - **配送**: 注文から3〜5営業日
-- **テスト注文**: サポートあり (実際に配送されるテストモード)
+- **テスト注文**: サポートあり
 
-#### API フロー
+### API フロー
 ```
-1. POST /v3/orders  → 注文作成 (商品、アートワークURL、配送先)
-2. Webhook          → 注文ステータス更新通知
+1. POST /v3/orders    → 注文作成 (商品、アートワークURL、配送先)
+2. Webhook            → 注文ステータス更新通知 (printing → shipped → delivered)
 3. GET /v3/orders/{id} → ステータス確認
 ```
 
-#### アートワーク (PDF) の準備
-- フロントエンドでCanvas → PDF変換 (jsPDF ライブラリ)
-- または、バックエンドでPDF生成 (puppeteer, @react-pdf/renderer)
-- Gelato の要求フォーマットに合わせたテンプレートが必要
+### フォールバック: Cloudprinter API
 
-### 第2候補: Cloudprinter API
-
-Gelatoと同様の統合サービス。
+Gelatoが日本向けカード商品に対応していなかった場合の代替。
 
 - **公式API**: https://docs.cloudprinter.com/
 - **日本国内パートナー**: あり
 - **ラミネート**: マット、グロス、ソフトタッチ
 - **価格API**: `price/lookup` エンドポイントで動的見積もり
-
-### 印刷サービスが使えない場合のフォールバック
-
-日本国内のネット印刷 (ラクスル、グラフィック等) はAPIを公開していない。
-この場合は以下の半自動フローになる:
-
-```
-Stripe決済 → 注文データをDBに保存 → 管理画面で確認
-→ 手動でPDF入稿 → 印刷所から自宅へ納品 → 手動で発送
-```
 
 ---
 
@@ -114,20 +105,20 @@ Stripe決済 → 注文データをDBに保存 → 管理画面で確認
 
 **入力項目:**
 
-| フィールド | 型 | バリデーション |
-|-----------|-----|--------------|
-| 氏名 | text | 必須 |
-| 郵便番号 | text | 7桁、ハイフンなし可 |
-| 都道府県 | select | 47都道府県 |
-| 市区町村 | text | 必須 |
-| 番地・建物名 | text | 必須 |
-| 電話番号 | tel | 必須 (配送用) |
-| メールアドレス | email | 必須 (確認メール) |
-| 枚数 | number | 1〜10 |
-| ラミネート | select | マット / グロス / ソフトタッチ |
-| フォントサイズ | select | S (レース中に見やすい最小) / M (標準) / L (大きめ) |
-| 単位 | auto | 現在選択中のkm/miを自動反映 |
-| ターゲットタイム | auto | 現在のスライダー値を自動反映 |
+| フィールド | 型 | バリデーション | 備考 |
+|-----------|-----|--------------|------|
+| 氏名 | text | 必須 | |
+| 郵便番号 | text | 7桁 | 入力で住所自動補完 (zipcloud API) |
+| 都道府県 | auto | 郵便番号から自動入力 | |
+| 市区町村 | auto | 郵便番号から自動入力 | |
+| 番地・建物名 | text | 必須 | |
+| 電話番号 | tel | 必須 | 配送用 |
+| メールアドレス | email | 必須 | 確認・発送通知メール |
+| 枚数 | number | 1〜10 | |
+| ラミネート | select | 必須 | マット / グロス / ソフトタッチ |
+| フォントサイズ | select | 必須 | S / M / L |
+| ターゲットタイム | auto | ― | 現在のスライダー値を自動反映 |
+| 単位 (km/mi) | auto | ― | 現在選択中を自動反映 |
 
 **フォントサイズとカードサイズの対応:**
 
@@ -137,75 +128,76 @@ Stripe決済 → 注文データをDBに保存 → 管理画面で確認
 | M | ハガキサイズ (148×100mm) | 12pt | ポケットに入る |
 | L | A5 (210×148mm) | 16pt | 見やすさ重視 |
 
-### 4.2 PDF生成
+### 4.2 PDF生成 (バックエンド)
 
-ペース表をPDFとして生成する。既存のCanvas画像生成ロジック (`generatePaceCardImage()`) を拡張。
+印刷品質を担保するため、**サーバーサイドでPDF生成**する。
 
-**案A: フロントエンドで生成 (jsPDF)**
 ```
-Canvas描画 → jsPDF でPDF化 → Blob URL → バックエンドにアップロード
+Workers API:
+  注文データ (タイム、チェックポイント、単位、フォントサイズ)
+    ↓
+  @react-pdf/renderer でPDF生成
+    ↓
+  Cloudflare R2 に保存 (公開URL)
+    ↓
+  Gelato注文時にアートワークURLとして渡す
 ```
-- メリット: サーバー負荷なし
-- デメリット: フォント埋め込みが面倒
 
-**案B: バックエンドで生成 (@react-pdf/renderer)**
-```
-注文データ → React PDFコンポーネント → PDF Buffer → Gelato に渡す
-```
-- メリット: フォント制御が確実、テンプレート管理しやすい
-- デメリット: サーバーリソース必要
-
-**推奨: 案B** — 印刷品質を担保するにはサーバーサイドPDF生成が安定。
+- フォント: Bebas Neue + DM Sans (既存デザインと統一)
+- PDFにフォントを埋め込み
+- Gelato の入稿仕様 (裁ち落とし、解像度300dpi) に準拠
 
 ### 4.3 Stripe決済
 
-**Stripe Checkout Session (サーバーサイド)** を使用。
+**Stripe Checkout Session** を使用。
 
 ```
-フロントエンド                    バックエンド                 Stripe
+フロントエンド                    Workers API                  Stripe
     |                               |                          |
-    |-- POST /api/create-checkout -->|                          |
-    |                               |-- Create Session -------->|
-    |                               |<-- Session URL -----------|
+    |-- POST /api/checkout -------->|                          |
+    |   (注文データ+配送先)          |-- PDF生成 → R2保存       |
+    |                               |-- Create Session ------->|
+    |                               |<-- Session URL ----------|
     |<-- redirect URL --------------|                          |
-    |-- redirect to Stripe -------->|                          |
+    |-- Stripe決済画面 ------------>|                          |
     |                               |                          |
-    |   (ユーザーがカード情報入力)                               |
+    |   (カード情報入力・決済)                                   |
     |                               |                          |
-    |                               |<-- checkout.completed ----|
-    |                               |-- Gelato注文作成 -------->|
+    |                               |<-- checkout.completed ---|
+    |                               |-- Gelato注文 ----------->|  (自動)
+    |                               |-- 確認メール送信 -------->|  (自動)
     |<-- /order-complete に戻る -----|                          |
 ```
 
-**価格設定:**
-- Stripe上に商品 (Product) と価格 (Price) を事前作成
-- 枚数 × 単価 で計算
-- ラミネート種類による価格差はメタデータで管理
+- Stripe Checkout の `metadata` に注文情報を埋め込み
+- Webhook で決済完了を受け取り、即座にGelato発注
+- 冪等性: `stripe_session_id` でGelato注文の重複防止
 
-### 4.4 注文管理
+### 4.4 注文管理DB
 
-**D1 (SQLite) テーブル設計:**
+**Cloudflare D1 (SQLite):**
 
 ```sql
 CREATE TABLE orders (
-  id TEXT PRIMARY KEY,           -- UUID
+  id TEXT PRIMARY KEY,              -- UUID
   stripe_session_id TEXT UNIQUE,
   stripe_payment_intent TEXT,
-  status TEXT DEFAULT 'paid',    -- paid → printing → shipped → delivered
+  status TEXT DEFAULT 'paid',       -- paid → ordered → printing → shipped → delivered → failed
 
   -- 注文内容
   target_time_seconds INTEGER,
-  unit TEXT,                     -- 'km' or 'mi'
+  unit TEXT,                        -- 'km' | 'mi'
   quantity INTEGER,
-  lamination TEXT,               -- 'matte', 'glossy', 'soft-touch'
-  font_size TEXT,                -- 'S', 'M', 'L'
+  lamination TEXT,                  -- 'matte' | 'glossy' | 'soft-touch'
+  card_size TEXT,                   -- 'S' | 'M' | 'L'
+  amount INTEGER,                   -- 決済額 (円)
 
   -- 配送先
   name TEXT,
   postal_code TEXT,
   prefecture TEXT,
   city TEXT,
-  address TEXT,
+  address_line TEXT,
   phone TEXT,
   email TEXT,
 
@@ -213,69 +205,94 @@ CREATE TABLE orders (
   gelato_order_id TEXT,
   pdf_url TEXT,
   tracking_number TEXT,
+  error_message TEXT,               -- 失敗時のエラー内容
 
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now'))
 );
 ```
 
-### 4.5 注文ステータス管理
+### 4.5 ステータス遷移 (すべて自動)
 
 ```
-[決済完了] → [PDF生成中] → [印刷発注済] → [印刷中] → [発送済] → [配達完了]
-  paid      generating    ordered       printing    shipped     delivered
+[決済完了] → [印刷発注済] → [印刷中] → [発送済] → [配達完了]
+  paid        ordered       printing    shipped     delivered
+    ↘
+  [失敗] ← (どの段階からも遷移可能。アラート発報)
+  failed
 ```
 
-- Stripe Webhook (`checkout.session.completed`) で `paid` に
-- PDF生成完了 → Gelato APIで発注 → `ordered` に
-- Gelato Webhook で `printing` → `shipped` に更新
-- 追跡番号が付いたらメール通知
+| イベント | トリガー | アクション |
+|---------|---------|-----------|
+| 決済完了 | Stripe Webhook `checkout.session.completed` | PDF生成 → R2保存 → Gelato発注 → 確認メール |
+| 印刷開始 | Gelato Webhook `order.status.printing` | DB更新 |
+| 発送済 | Gelato Webhook `order.status.shipped` | DB更新 → 追跡番号付きメール送信 |
+| 配達完了 | Gelato Webhook `order.status.delivered` | DB更新 |
+| 失敗 | Gelato Webhook `order.status.failed` | DB更新 → 管理者アラート (Slack/メール) → 自動返金 (Stripe Refund API) |
+
+### 4.6 エラーハンドリング (自動復旧)
+
+| エラー | 自動対応 |
+|--------|---------|
+| PDF生成失敗 | 3回リトライ → 失敗なら自動返金 + 管理者アラート |
+| Gelato API エラー | 3回リトライ (指数バックオフ) → 失敗なら自動返金 |
+| Gelato印刷失敗 | Gelato Webhook で検知 → 自動返金 + アラート |
+| Stripe Webhook 受信漏れ | Stripe の自動リトライ (最大3日間) |
 
 ---
 
-## 5. 実装フェーズ
+## 5. 実装タスク
 
-### Phase 1: MVP (最小構成)
+**フェーズなし。すべて一括で実装し、初日から完全自動化。**
 
-**目標: 注文→決済→手動印刷発送の流れを確立**
+### バックエンド (Cloudflare Workers)
 
-1. 注文フォームUI (モーダル)
-2. Stripe Checkout 連携 (Cloudflare Workers)
-3. 注文データのDB保存 (D1)
-4. PDF生成 (フロントエンド jsPDF でまず実装)
-5. 管理者向け注文一覧ページ (シンプルなもの)
-6. 注文確認メール (Resend API or SendGrid)
+1. `wrangler` プロジェクト作成 (`api/` ディレクトリ)
+2. D1 データベース + マイグレーション
+3. R2 バケット (PDF保存用)
+4. `POST /api/checkout` — PDF生成 + Stripe Session作成
+5. `POST /api/webhooks/stripe` — 決済完了 → Gelato発注
+6. `POST /api/webhooks/gelato` — ステータス更新 + メール通知
+7. `GET /api/orders/:id` — 注文ステータス確認 (ユーザー向け)
+8. PDF生成モジュール (@react-pdf/renderer)
+9. Gelato API クライアント
+10. メール送信 (Resend API) — 注文確認 + 発送通知
+11. エラーハンドリング + 自動返金ロジック
 
-この段階では印刷・発送は手動。Gelato連携前に需要を確認する。
+### フロントエンド (既存 React SPA に追加)
 
-### Phase 2: 印刷自動化
+12. 注文ボタン (ペース表の下に配置)
+13. 注文フォームモーダル
+14. 郵便番号 → 住所自動補完 (zipcloud API)
+15. 注文確認画面 (プレビュー付き)
+16. Stripe Checkout へのリダイレクト
+17. 注文完了ページ (`/order-complete`)
+18. 注文ステータス確認ページ (`/order/:id`)
+19. i18n対応 (translations.ts に注文関連キー追加)
 
-7. Gelato API 連携
-8. PDF → Gelato アートワークアップロード
-9. Gelato Webhook でステータス追跡
-10. 発送通知メール (追跡番号付き)
+### インフラ・設定
 
-### Phase 3: 改善
-
-11. 注文ステータスページ (ユーザー向け)
-12. 複数ターゲットタイムの一括注文
-13. カスタムデザイン (色、名前入り)
-14. バックエンドPDF生成に移行
+20. Stripe アカウント設定 (商品・価格・Webhook)
+21. Gelato アカウント設定 (APIキー・Webhook・商品確認)
+22. Cloudflare D1 / R2 / Workers セットアップ
+23. 環境変数管理 (Stripe秘密鍵, Gelato APIキー, Resend APIキー)
+24. GitHub Actions に Workers デプロイを追加
 
 ---
 
-## 6. 技術スタック (まとめ)
+## 6. 技術スタック
 
 | レイヤー | 技術 | 理由 |
 |---------|------|------|
-| フロントエンド | 既存 React SPA | 追加モーダルのみ |
-| PDF生成 | jsPDF (Phase 1) → @react-pdf (Phase 3) | 段階的に品質向上 |
-| バックエンド | Cloudflare Workers | 無料枠、エッジ実行 |
-| DB | Cloudflare D1 | Workers と統合、SQLite |
-| 決済 | Stripe Checkout | 要件通り |
-| 印刷+配送 | Gelato API | 唯一の完全自動化対応 |
-| メール | Resend | 安価、API簡単 |
-| ホスティング | GitHub Pages (フロント) + Cloudflare (API) | 既存構成を維持 |
+| フロントエンド | 既存 React SPA (GitHub Pages) | 注文UIをモーダルで追加するのみ |
+| バックエンド | Cloudflare Workers + Hono | 無料枠10万req/日、エッジ実行、fetch()ベース |
+| DB | Cloudflare D1 (SQLite) | Workers統合、無料枠5GB |
+| ストレージ | Cloudflare R2 | PDF保存、無料枠10GB |
+| 決済 | Stripe Checkout | 要件通り。Webhookで後続処理をトリガー |
+| 印刷+配送 | Gelato API (第1候補) / Cloudprinter (第2候補) | API完結で完全自動化 |
+| メール | Resend | 月3,000通無料、API簡単 |
+| PDF生成 | @react-pdf/renderer | React的にPDF構築、フォント埋め込み対応 |
+| 住所補完 | zipcloud API | 無料、郵便番号→住所変換 |
 
 ---
 
@@ -283,17 +300,19 @@ CREATE TABLE orders (
 
 | リスク | 影響 | 対策 |
 |--------|------|------|
-| Gelato の日本向けカード商品が限定的 | ラミネートカードが注文できない | Phase 1で手動運用しつつ、Gelato/Cloudprinterに問い合わせ |
-| 500円では原価割れ | 赤字 | 800〜1,000円に設定、または送料別 |
-| Gelato APIの仕様変更 | 連携が壊れる | Webhook監視、フォールバック手動フロー |
-| 注文数が少ない | Gelato契約の固定費負け | Phase 1は手動運用で需要を確認してから自動化 |
-| PDF品質 (フォント、解像度) | 印刷品質が低い | テスト注文で検証、必要ならバックエンド生成に切替 |
+| Gelato の日本向けカード商品が限定的 | ラミネートカード注文不可 | 事前にAPIカタログを確認。ダメならCloudprinterに切替 |
+| Gelato APIの障害・仕様変更 | 注文が通らない | リトライ + 自動返金で顧客影響を最小化。アラートで即時検知 |
+| PDF品質が印刷に不適 | 仕上がりが汚い | Gelatoテスト注文で事前検証。300dpi、CMYK対応 |
+| 注文数が極端に少ない | 開発コストに見合わない | Cloudflare無料枠で固定費ゼロ。赤字リスクなし |
+| 個人情報の取り扱い | 法的リスク | Stripeが決済情報を管理。住所はD1に暗号化保存。プライバシーポリシー必要 |
 
 ---
 
-## 8. 次のアクション
+## 8. 次のアクション (優先順)
 
-1. **Gelato に問い合わせ**: 日本国内向けのラミネートカード商品の具体的なラインナップと価格
-2. **Stripe アカウント設定**: テストモードでCheckout Sessionの動作確認
-3. **Cloudflare Workers プロジェクト作成**: `wrangler init` でAPIプロジェクトを準備
-4. **Phase 1 の実装開始**: 注文フォームUIから着手
+1. **Gelato APIカタログ確認** — 日本向けラミネートカード商品の有無と正確な価格を確認
+2. **Stripe テストモード設定** — Checkout Session の動作確認
+3. **Cloudflare Workers プロジェクト作成** — `api/` に `wrangler init`
+4. **PDF生成プロトタイプ** — 既存ペース表デザインをPDF化、Gelato入稿仕様に合わせる
+5. **フロントエンド注文フォーム実装** — UIから着手
+6. **結合テスト** — テスト注文で実際にカードが届くことを確認
