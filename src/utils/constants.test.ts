@@ -155,3 +155,160 @@ describe('constants', () => {
     expect(halfMi).toBeDefined()
   })
 })
+
+describe('marathon pace calculations - kilometers', () => {
+  it('calculates correct pace for 3:00:00 marathon', () => {
+    const totalMinutes = 180
+    const totalSeconds = totalMinutes * 60 // 10800 seconds
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    expect(formatPace(pacePerKm)).toBe('4:16')
+  })
+
+  it('calculates correct pace for 3:30:00 marathon', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60 // 12600 seconds
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    expect(formatPace(pacePerKm)).toBe('4:59')
+  })
+
+  it('calculates correct pace for 4:00:00 marathon', () => {
+    const totalMinutes = 240
+    const totalSeconds = totalMinutes * 60 // 14400 seconds
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    expect(formatPace(pacePerKm)).toBe('5:41')
+  })
+
+  it('calculates correct pace for 5:00:00 marathon', () => {
+    const totalMinutes = 300
+    const totalSeconds = totalMinutes * 60 // 18000 seconds
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    expect(formatPace(pacePerKm)).toBe('7:07')
+  })
+
+  it('calculates correct half marathon split for 3:30:00 marathon', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60
+    const halfMarathonDistance = 21.0975
+    const halfMarathonTime = (halfMarathonDistance / MARATHON_DISTANCE_KM) * totalSeconds
+    expect(formatTime(halfMarathonTime)).toBe('1:45:00')
+  })
+
+  it('calculates correct 10km split for 4:00:00 marathon', () => {
+    const totalMinutes = 240
+    const totalSeconds = totalMinutes * 60
+    const distance10km = 10
+    const splitTime = (distance10km / MARATHON_DISTANCE_KM) * totalSeconds
+    expect(formatTime(splitTime)).toBe('0:56:53')
+  })
+
+  it('calculates correct 5km split for 3:30:00 marathon', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60
+    const distance5km = 5
+    const splitTime = (distance5km / MARATHON_DISTANCE_KM) * totalSeconds
+    expect(formatTime(splitTime)).toBe('0:24:53')
+  })
+})
+
+describe('marathon pace calculations - miles', () => {
+  it('calculates correct pace for 3:00:00 marathon', () => {
+    const totalMinutes = 180
+    const totalSeconds = totalMinutes * 60
+    const pacePerMi = totalSeconds / MARATHON_DISTANCE_MI
+    expect(formatPace(pacePerMi)).toBe('6:52')
+  })
+
+  it('calculates correct pace for 3:30:00 marathon', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60
+    const pacePerMi = totalSeconds / MARATHON_DISTANCE_MI
+    expect(formatPace(pacePerMi)).toBe('8:01')
+  })
+
+  it('calculates correct pace for 4:00:00 marathon', () => {
+    const totalMinutes = 240
+    const totalSeconds = totalMinutes * 60
+    const pacePerMi = totalSeconds / MARATHON_DISTANCE_MI
+    expect(formatPace(pacePerMi)).toBe('9:09')
+  })
+
+  it('calculates correct half marathon split for 3:30:00 marathon', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60
+    const halfMarathonDistance = 13.1
+    const halfMarathonTime = (halfMarathonDistance / MARATHON_DISTANCE_MI) * totalSeconds
+    expect(formatTime(halfMarathonTime)).toBe('1:44:55')
+  })
+})
+
+describe('split time accuracy', () => {
+  it('verifies finish time equals input time', () => {
+    const totalMinutes = 210
+    const totalSeconds = totalMinutes * 60
+    const finishTime = (MARATHON_DISTANCE_KM / MARATHON_DISTANCE_KM) * totalSeconds
+    expect(formatTime(finishTime)).toBe('3:30:00')
+  })
+
+  it('verifies pace calculation consistency', () => {
+    const totalMinutes = 180
+    const totalSeconds = totalMinutes * 60
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    const time1kmUsingPace = pacePerKm
+    const time1kmUsingSplit = (1 / MARATHON_DISTANCE_KM) * totalSeconds
+    // Should be equal within floating point precision
+    expect(Math.abs(time1kmUsingPace - time1kmUsingSplit)).toBeLessThan(0.01)
+  })
+
+  it('verifies sum of 1km segments equals total time', () => {
+    const totalMinutes = 240
+    const totalSeconds = totalMinutes * 60
+    const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+    const total = pacePerKm * MARATHON_DISTANCE_KM
+    // Should equal total time within floating point precision
+    expect(Math.abs(total - totalSeconds)).toBeLessThan(0.01)
+  })
+})
+
+describe('preset times accuracy', () => {
+  it('calculates correct pace for all preset times', () => {
+    // Verify that each preset has a valid pace calculation
+    for (const preset of PRESETS) {
+      const totalSeconds = preset.minutes * 60
+      const pacePerKm = totalSeconds / MARATHON_DISTANCE_KM
+      const formattedPace = formatPace(pacePerKm)
+      // Pace should be a valid time format
+      expect(formattedPace).toMatch(/^\d+:\d{2}$/)
+      // Pace should be reasonable (between 3:00 and 15:00 per km)
+      const [mins, secs] = formattedPace.split(':').map(Number)
+      const totalPaceSeconds = mins * 60 + secs
+      expect(totalPaceSeconds).toBeGreaterThan(180) // faster than 3:00/km
+      expect(totalPaceSeconds).toBeLessThan(900) // slower than 15:00/km
+    }
+  })
+})
+
+describe('checkpoint distances integrity', () => {
+  it('verifies km checkpoints are in ascending order', () => {
+    for (let i = 1; i < CHECKPOINTS_KM.length; i++) {
+      expect(CHECKPOINTS_KM[i].distance).toBeGreaterThan(CHECKPOINTS_KM[i - 1].distance)
+    }
+  })
+
+  it('verifies mi checkpoints are in ascending order', () => {
+    for (let i = 1; i < CHECKPOINTS_MI.length; i++) {
+      expect(CHECKPOINTS_MI[i].distance).toBeGreaterThan(CHECKPOINTS_MI[i - 1].distance)
+    }
+  })
+
+  it('verifies last km checkpoint is marathon distance', () => {
+    const lastCheckpoint = CHECKPOINTS_KM[CHECKPOINTS_KM.length - 1]
+    expect(lastCheckpoint.distance).toBe(MARATHON_DISTANCE_KM)
+    expect(lastCheckpoint.labelKey).toBe('finish')
+  })
+
+  it('verifies last mi checkpoint is marathon distance', () => {
+    const lastCheckpoint = CHECKPOINTS_MI[CHECKPOINTS_MI.length - 1]
+    expect(lastCheckpoint.distance).toBe(26.2)
+    expect(lastCheckpoint.labelKey).toBe('finish')
+  })
+})

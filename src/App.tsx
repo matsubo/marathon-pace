@@ -34,6 +34,9 @@ import {
   PrintIcon,
   LinkIcon,
   CheckIcon,
+  GithubIcon,
+  CoffeeIcon,
+  HeartIcon,
 } from './components/Icons'
 
 interface Theme {
@@ -387,7 +390,7 @@ export default function App() {
             onClick={() => setShowLangModal(true)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium ${theme.card} ${theme.cardBorder} ${theme.text} transition-colors`}
           >
-            <GlobeIcon />
+            <GlobeIcon size={20} />
             <span className="text-xs tracking-wide">
               {LANGUAGES.find((l) => l.code === lang)?.label}
             </span>
@@ -397,7 +400,7 @@ export default function App() {
             onClick={() => setDarkMode(!darkMode)}
             className={`p-2.5 rounded-lg ${theme.card} ${theme.cardBorder} ${theme.text} transition-colors`}
           >
-            {darkMode ? <SunIcon /> : <MoonIcon />}
+            {darkMode ? <SunIcon size={20} /> : <MoonIcon size={20} />}
           </button>
         </header>
 
@@ -555,7 +558,7 @@ export default function App() {
             disabled={isGenerating}
             className="px-7 py-3 bg-track-500 text-white rounded-xl font-semibold hover:bg-track-600 active:bg-track-700 transition-all shadow-lg shadow-track-500/20 flex items-center gap-2 disabled:opacity-50"
           >
-            <ShareIcon />
+            <ShareIcon size={20} />
             {isGenerating ? t('generating') : t('share')}
           </button>
 
@@ -563,7 +566,7 @@ export default function App() {
             onClick={() => window.print()}
             className={`px-7 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 ${theme.card} ${theme.cardBorder} ${theme.text} hover:shadow-md`}
           >
-            <PrintIcon />
+            <PrintIcon size={20} />
             {t('print')}
           </button>
         </div>
@@ -578,13 +581,84 @@ export default function App() {
         </div>
 
         {/* ── Footer ── */}
-        <footer className={`text-center ${theme.textSubtle} text-sm mt-10 mb-4 no-print`}>
-          <p>{t('goodLuck')}</p>
-          <p className="mt-2">
-            <a href="https://x.com/matsubokkuri" target="_blank" rel="noopener noreferrer" className={`${theme.accentHover} transition-colors`}>@matsubokkuri</a>
-            <span className="mx-2">·</span>
-            <a href="https://github.com/matsubo/marathon-pace" target="_blank" rel="noopener noreferrer" className={`${theme.accentHover} transition-colors`}>GitHub</a>
-          </p>
+        <footer className={`${theme.card} ${theme.cardBorder} rounded-2xl shadow-sm p-6 mt-10 mb-4 no-print transition-colors`}>
+          <div className="space-y-6">
+            {/* Good Luck Message */}
+            <div className="text-center">
+              <p className={`${theme.text} font-medium`}>{t('goodLuck')}</p>
+            </div>
+
+            {/* Social Links */}
+            <div className="border-t pt-4" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+              <div className={`text-center text-xs ${theme.textSubtle} uppercase tracking-wider mb-3`}>
+                Social
+              </div>
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <a
+                  href="https://x.com/matsubokkuri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 ${theme.text} ${theme.accentHover} transition-colors`}
+                >
+                  <XIcon size={20} />
+                  <span className="text-sm">@matsubokkuri</span>
+                </a>
+                <div className="w-px h-4" style={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}></div>
+                <a
+                  href="https://github.com/matsubo/marathon-pace"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 ${theme.text} ${theme.accentHover} transition-colors`}
+                >
+                  <GithubIcon size={20} />
+                  <span className="text-sm">GitHub</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Sponsor Links */}
+            <div className="border-t pt-4" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+              <div className={`text-center text-xs ${theme.textSubtle} uppercase tracking-wider mb-3`}>
+                Support
+              </div>
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <a
+                  href="https://buymeacoffee.com/matsubokkuri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 ${theme.accent} ${theme.accentHover} transition-colors font-medium`}
+                >
+                  <CoffeeIcon size={20} />
+                  <span className="text-sm">Buy Me a Coffee</span>
+                </a>
+                <div className="w-px h-4" style={{ backgroundColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}></div>
+                <a
+                  href="https://github.com/sponsors/matsubo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex items-center gap-2 ${theme.accent} ${theme.accentHover} transition-colors font-medium`}
+                >
+                  <HeartIcon size={20} />
+                  <span className="text-sm">GitHub Sponsors</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Creator */}
+            <div className="text-center border-t pt-4" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+              <p className={`text-xs ${theme.textSubtle}`}>
+                Created by{' '}
+                <a
+                  href="https://x.com/matsubokkuri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${theme.accent} ${theme.accentHover} font-medium transition-colors`}
+                >
+                  @matsubokkuri
+                </a>
+              </p>
+            </div>
+          </div>
         </footer>
       </div>
 
@@ -663,7 +737,7 @@ export default function App() {
                 onClick={downloadImage}
                 className={`w-full px-4 py-3 ${theme.modalBtn} rounded-xl font-medium transition-all flex items-center justify-center gap-2`}
               >
-                <DownloadIcon />
+                <DownloadIcon size={20} />
                 {t('downloadImage')}
               </button>
 
@@ -671,7 +745,7 @@ export default function App() {
                 onClick={copyLink}
                 className={`w-full px-4 py-3 ${linkCopied ? 'bg-emerald-600 text-white' : theme.modalBtn} rounded-xl font-medium transition-all flex items-center justify-center gap-2`}
               >
-                {linkCopied ? <CheckIcon /> : <LinkIcon />}
+                {linkCopied ? <CheckIcon size={20} /> : <LinkIcon size={20} />}
                 {linkCopied ? t('linkCopied') : t('copyLink')}
               </button>
 
@@ -680,7 +754,7 @@ export default function App() {
                   onClick={shareToX}
                   className="flex-1 px-4 py-3 bg-stone-900 text-white rounded-xl font-medium hover:bg-black transition-colors flex items-center justify-center gap-2"
                 >
-                  <XIcon />
+                  <XIcon size={20} />
                   {t('shareOnX')}
                 </button>
 
@@ -688,7 +762,7 @@ export default function App() {
                   onClick={shareToFacebook}
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
-                  <FacebookIcon />
+                  <FacebookIcon size={20} />
                   {t('facebook')}
                 </button>
               </div>

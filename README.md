@@ -1,6 +1,15 @@
 # Marathon Pace Chart
 
+[![Test](https://github.com/matsubo/marathon-pace/actions/workflows/test.yml/badge.svg)](https://github.com/matsubo/marathon-pace/actions/workflows/test.yml)
+[![Deploy to GitHub Pages](https://github.com/matsubo/marathon-pace/actions/workflows/deploy.yml/badge.svg)](https://github.com/matsubo/marathon-pace/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite)](https://vitejs.dev/)
+
 A web application to calculate marathon split times. Set your target finish time and get pace charts for race day.
+
+🏃 **[Live Demo](https://matsubo.github.io/marathon-pace/)**
 
 | Light Mode | Dark Mode |
 |:---:|:---:|
@@ -16,6 +25,7 @@ A web application to calculate marathon split times. Set your target finish time
 - **Social sharing** - Share on X (Twitter) and Facebook with OG meta tags
 - **URL sharing** - Share specific target times via query param (e.g., `?target_time=3-30-00`)
 - **Print-friendly** - Optimized layout for printing
+- **Footer links** - Social media links and sponsor support (Buy Me a Coffee, GitHub Sponsors)
 
 ## Tech Stack
 
@@ -24,6 +34,7 @@ A web application to calculate marathon split times. Set your target finish time
 - Tailwind CSS 3
 - React Router 6
 - Vitest + Testing Library
+- Lucide React (icon library)
 
 ## Development
 
@@ -47,14 +58,14 @@ src/
 ├── OgImage.tsx                    # OG image rendering route (/og-image)
 ├── index.css                      # Tailwind directives + custom styles
 ├── components/
-│   ├── Icons.tsx                  # SVG icon components
+│   ├── Icons.tsx                  # Lucide React icon exports
 │   └── GoogleTagManager.tsx       # GTM analytics component
 ├── hooks/
 │   ├── useLocalStorage.ts         # Generic localStorage hook + useLanguage
 │   └── useLocalStorage.test.ts
 ├── utils/
 │   ├── constants.ts               # Marathon distances, checkpoints, formatters
-│   ├── constants.test.ts
+│   ├── constants.test.ts          # Comprehensive pace & split calculation tests
 │   ├── translations.ts            # Type-safe i18n (5 languages)
 │   └── translations.test.ts
 └── test/
